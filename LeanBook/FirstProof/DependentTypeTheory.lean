@@ -93,6 +93,7 @@ universe u
 def H (α : Type u) : Type u := Prod α α
 -- {u} is universe parameter
 #check H
+#check H Nat
 -- explicitly specifying universe parameters
 def I.{u1} (α : Type u1) : Type u1 := Prod α α
 
@@ -170,6 +171,7 @@ def bar := (fun a => fun x : a => x+2) Nat
  -/
 
 -- 2.6. Variable and Sections
+/- variable command -/
 variable (α β γ : Type)
 variable (g : β → γ) (f: α → β) (h: α → α)
 
@@ -178,3 +180,132 @@ def doTwice2 (x:α):= h (h x)
 def doThrice (x:α):= h (h (h x))
 
 #print compose2
+
+/- scope variables with `section` -/
+section useful
+  variable (α β γ : Type)
+  variable (g :β → γ) (f : α → β) (h : α → α)
+  variable (x : α)
+
+  def my_compose := g (f x)
+  def my_doTwice := h (h x)
+  def my_doThrice := h (h (h x))
+end useful
+
+-- 2.7. Namespaces
+namespace Foo
+  def a : Nat := 5
+  def ff (x : Nat) : Nat := x + 7
+
+  def ffa : Nat := ff a
+  def ffffa : Nat := ff (ff a)
+
+  #check a
+  #check ff
+  #check ffa
+  #check ffffa
+  #check Foo.ffffa
+
+  /- can be nested -/
+  namespace Bar
+    def bfa : Nat := ff (ff a)
+    def a : Nat := 9
+
+    def bb : Nat := Foo.a + a
+  end Bar
+end Foo
+
+/- reopen and extend -/
+namespace Foo
+  def b : Nat := 5
+  def c : Nat := a+b
+end Foo
+
+#check Foo.a
+#check Foo.Bar.bfa
+#check Foo.b
+#eval Foo.Bar.bb
+
+/- can i close this? -/
+open Foo
+#check a
+
+#check List.nil
+#check List.cons
+#check List.map
+
+/- i don't like this. need alias at least -/
+/- open List
+#check nil
+ -/
+-- 2.8. What makes dependent type theory dependent?
+#check Vector
+#check Vector Bool 3
+#check List Bool
+
+def cons (α : Type) (a : α) (as : List α) : List α :=
+  List.cons a as
+
+#check cons Nat
+
+#check @List.cons
+#check @List.length
+
+/- IDK what's going on -/
+/- sigma type = dependant products
+   - β take a value of α and returns a type v2
+   - and you can create a product of ⟨α, β a⟩ it's called sigma
+   - but i can't understand that
+    - dependent Cartesian product types (a : α) × β a generalize the Cartesian product α × β
+   - is this useful?-/
+universe u2 v2
+def df (α : Type u2) (β : α → Type v2) (a : α) (b : β a) : (a : α) × β a :=
+  ⟨a, b⟩
+def dg (α : Type u2) (β : α → Type v2) (a : α) (b : β a) : Σ a : α, β a :=
+  Sigma.mk a b
+
+def dh1 (x : Nat) : Nat :=
+  (df Type (fun α => α) Nat x).2
+  --
+def dh2 (x : Nat) : Nat :=
+  (dg Type (fun α => α) Nat x).2
+
+#eval dh1 5
+#eval dh2 5
+#check (df Type (fun α => α) Nat 4).1
+
+-- 2.9. Implicit Arguments
+#eval List.cons 0 List.nil
+#eval List.cons 9 []
+#check List.nil
+
+def Lst (α : Type u) : Type u := List α
+/- implicit argument is defined by {} -/
+def Lst.cons {α : Type u} (a : α) (as : Lst α) : Lst α := List.cons a as
+def Lst.nil {α : Type u} : Lst α := List.nil
+def Lst.append {α : Type u} (as bs : Lst α) : Lst α := List.append as bs
+
+#check Lst.cons 0 Lst.nil
+#eval let as := Lst.nil; let bs := Lst.cons 5 Lst.nil
+  Lst.append as bs
+
+def ident {α : Type u} (x : α) := x
+#check ident
+#check (ident)
+
+#eval (List.nil : List Nat)
+#check (List.nil : List Nat)
+
+#check (2 : Float)
+
+#check id
+#check @id
+#check @id Nat
+
+#check id 3
+#check id Nat
+#check @id Nat 3
+-- #check id Nat 3 -- you can't
+#eval id 3
+-- #eval id Nat -- you can't
+#check List Nat
