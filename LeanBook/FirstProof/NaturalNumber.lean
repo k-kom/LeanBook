@@ -22,7 +22,7 @@
 ∘ circ
 · .
 × times
-⋄ diamond
+⋄ diamond (soooo smol)
 ∈ in
 ≈ ~~
 ∼ sim (similar?)
@@ -80,3 +80,9 @@ example (n : MyNat) : MyNat.add n .zero = n := by
   rfl
 example: MyNat.add .zero .zero = .zero := by
   rfl
+
+theorem and_commutative (p q : Prop) : p ∧ q → q ∧ p :=
+  fun hpq : p ∧ q =>
+  have hp : p := And.left hpq
+  have hq : q := And.right hpq
+  show q ∧ p from And.intro hq hp
